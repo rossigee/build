@@ -1,7 +1,34 @@
 # ====================================================================================
 # End to End Testing
 
-UPTEST_EXTRA_ARGS ?=
+ifndef UPTEST_LOCAL_DEPLOY_TARGET
+  $(error UPTEST_LOCAL_DEPLOY_TARGET is not set. It is required for the provider or configuration \
+		to be deployed before running the tests. \
+		Example `local.xpkg.deploy.configuration.$(PROJECT_NAME)` for configurations or \
+		`local.xpkg.deploy.provider.$(PROJECT_NAME)` for providers)
+endif
+
+UPTEST_ARGS ?=
+
+UPTEST_SKIP_UPDATE ?= false
+ifeq ($(UPTEST_SKIP_UPDATE),true)
+    UPTEST_ARGS += --skip-update
+endif
+
+UPTEST_SKIP_IMPORT ?= false
+ifeq ($(UPTEST_SKIP_IMPORT),true)
+    UPTEST_ARGS += --skip-import
+endif
+
+UPTEST_SKIP_DELETE ?= false
+ifeq ($(UPTEST_SKIP_DELETE),true)
+    UPTEST_ARGS += --skip-delete
+endif
+
+UPTEST_DEFAULT_TIMEOUT ?=
+ifdef UPTEST_DEFAULT_TIMEOUT
+	UPTEST_ARGS += --default-timeout=$(UPTEST_DEFAULT_TIMEOUT)
+endif
 
 UPTEST_COMMAND = SKIP_DEPLOY_ARGO=$(SKIP_DEPLOY_ARGO) \
 	KUBECTL=$(KUBECTL) \
@@ -9,26 +36,23 @@ UPTEST_COMMAND = SKIP_DEPLOY_ARGO=$(SKIP_DEPLOY_ARGO) \
 	CROSSPLANE_CLI=$(CROSSPLANE_CLI) \
 	CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) \
 	YQ=$(YQ) \
-	$(UPTEST) e2e $(UPTEST_CLAIMS) \
+	$(UPTEST) e2e $(UPTEST_INPUT_MANIFESTS) \
 	--data-source="${UPTEST_DATASOURCE_PATH}" \
 	--setup-script=$(UPTEST_SETUP_SCRIPT) \
-	--default-timeout=2400s \
-	--skip-update \
-	--skip-import \
-	$(UPTEST_EXTRA_ARGS)
+	$(UPTEST_ARGS)
 
 # This target requires the following environment variables to be set:
 # - To ensure the proper functioning of the end-to-end test resource pre-deletion hook, it is crucial to arrange your resources appropriately.
-#   You can check the basic implementation here: https://github.com/upbound/uptest/blob/main/internal/templates/01-delete.yaml.tmpl.
-# - UPTEST_DATASOURCE_PATH (optional), see https://github.com/upbound/uptest#injecting-dynamic-values-and-datasource
+#   You can check the basic implementation here: https://github.com/crossplane/uptest/blob/main/internal/templates/03-delete.yaml.tmpl
+# - UPTEST_DATASOURCE_PATH (optional), see https://github.com/crossplane/uptest?tab=readme-ov-file#injecting-dynamic-values-and-datasource
 UPTEST_SETUP_SCRIPT ?= test/setup.sh
 uptest: $(UPTEST) $(KUBECTL) $(CHAINSAW) $(CROSSPLANE_CLI) $(YQ)
 	@$(INFO) running automated tests
 	$(UPTEST_COMMAND) || $(FAIL)
 	@$(OK) running automated tests
 
-# Run uptest together with all dependencies. Use `make e2e UPTEST_EXTRA_ARGS=--skip-delete` to skip deletion of resources.
-e2e: build controlplane.down controlplane.up local.xpkg.deploy.configuration.$(PROJECT_NAME) uptest #
+# Run uptest together with all dependencies. Use `make e2e UPTEST_SKIP_DELET=true` to skip deletion of resources.
+e2e: build controlplane.down controlplane.up $(UPTEST_LOCAL_DEPLOY_TARGET) uptest #
 
 render: $(CROSSPLANE_CLI) ${YQ}
 	@indir="./examples"; \
