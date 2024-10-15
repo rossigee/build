@@ -57,26 +57,25 @@ e2e: build controlplane.down controlplane.up $(UPTEST_LOCAL_DEPLOY_TARGET) uptes
 render: $(CROSSPLANE_CLI) ${YQ}
 	@indir="./examples"; \
 	for file in $$(find $$indir -type f -name '*.yaml' ); do \
-	    doc_count=$$(grep -c '^---' "$$file"); \
-	    if [[ $$doc_count -gt 0 ]]; then \
-	        continue; \
-	    fi; \
-	    COMPOSITION=$$(${YQ} eval '.metadata.annotations."render.crossplane.io/composition-path"' $$file); \
-	    FUNCTION=$$(${YQ} eval '.metadata.annotations."render.crossplane.io/function-path"' $$file); \
-	    ENVIRONMENT=$$(${YQ} eval '.metadata.annotations."render.crossplane.io/environment-path"' $$file); \
-	    OBSERVE=$$(${YQ} eval '.metadata.annotations."render.crossplane.io/observe-path"' $$file); \
-	    if [[ "$$ENVIRONMENT" == "null" ]]; then \
-	        ENVIRONMENT=""; \
-	    fi; \
-	    if [[ "$$OBSERVE" == "null" ]]; then \
-	        OBSERVE=""; \
-	    fi; \
-	    if [[ "$$COMPOSITION" == "null" || "$$FUNCTION" == "null" ]]; then \
-	        continue; \
-	    fi; \
-	    ENVIRONMENT=$${ENVIRONMENT=="null" ? "" : $$ENVIRONMENT}; \
-	    OBSERVE=$${OBSERVE=="null" ? "" : $$OBSERVE}; \
-	    $(CROSSPLANE_CLI) render $$file $$COMPOSITION $$FUNCTION $${ENVIRONMENT:+-e $$ENVIRONMENT} $${OBSERVE:+-o $$OBSERVE} -x; \
+		doc_count=$$(${YQ} eval 'documentIndex' $$file | wc -l); \
+		for i in $$(seq 0 $$(($$doc_count - 1))); do \
+			COMPOSITION=$$(${YQ} eval "select(documentIndex == $$i) | .metadata.annotations.\"render.crossplane.io/composition-path\"" $$file); \
+			FUNCTION=$$(${YQ} eval "select(documentIndex == $$i) | .metadata.annotations.\"render.crossplane.io/function-path\"" $$file); \
+			ENVIRONMENT=$$(${YQ} eval "select(documentIndex == $$i) | .metadata.annotations.\"render.crossplane.io/environment-path\"" $$file); \
+			OBSERVE=$$(${YQ} eval "select(documentIndex == $$i) | .metadata.annotations.\"render.crossplane.io/observe-path\"" $$file); \
+			if [[ "$$ENVIRONMENT" == "null" ]]; then \
+				ENVIRONMENT=""; \
+			fi; \
+			if [[ "$$OBSERVE" == "null" ]]; then \
+				OBSERVE=""; \
+			fi; \
+			if [[ "$$COMPOSITION" == "null" || "$$FUNCTION" == "null" ]]; then \
+				continue; \
+			fi; \
+			ENVIRONMENT=$${ENVIRONMENT=="null" ? "" : $$ENVIRONMENT}; \
+			OBSERVE=$${OBSERVE=="null" ? "" : $$OBSERVE}; \
+			$(CROSSPLANE_CLI) render $$file $$COMPOSITION $$FUNCTION $${ENVIRONMENT:+-e $$ENVIRONMENT} $${OBSERVE:+-o $$OBSERVE} -x; \
+		done; \
 	done
 
 YAMLLINT_FOLDER ?= ./apis
