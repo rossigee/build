@@ -54,8 +54,24 @@ uptest: $(UPTEST) $(KUBECTL) $(CHAINSAW) $(CROSSPLANE_CLI) $(YQ)
 # Run uptest together with all dependencies. Use `make e2e UPTEST_SKIP_DELET=true` to skip deletion of resources.
 e2e: build controlplane.down controlplane.up $(UPTEST_LOCAL_DEPLOY_TARGET) uptest #
 
+# Renders crossplane compositions in the current project
+#
+# Composition and Function must be defined, Environment and Observeed Resources are optionally available.
+# The command discovers sees by parsing the `render.crossplane.io/*`-annotations of file found in the
+# examples-directorry, usually: `/examples`
+#
+# Possible values are:
+#  - composition-path (Composition)
+#  - function-path (Function)
+#  - environment-path (Environment Configs)
+#  - observe-path (Observed Resources)
+#
+#  Example: `render.crossplane.io/composition-path: "apis/kcl/composition.yaml"`
+#
 render: $(CROSSPLANE_CLI) ${YQ}
 	@indir="./examples"; \
+	rm -rf "$(CACHE_DIR)/render"; \
+	mkdir -p "$(CACHE_DIR)/render" || true; \
 	for file in $$(find $$indir -type f -name '*.yaml' ); do \
 		doc_count=$$(${YQ} eval 'documentIndex' $$file | wc -l); \
 		for i in $$(seq 0 $$(($$doc_count - 1))); do \
@@ -72,11 +88,17 @@ render: $(CROSSPLANE_CLI) ${YQ}
 			if [[ "$$COMPOSITION" == "null" || "$$FUNCTION" == "null" ]]; then \
 				continue; \
 			fi; \
+			OUT_FILE=$$(echo $$file | md5sum | head -c5); \
 			ENVIRONMENT=$${ENVIRONMENT=="null" ? "" : $$ENVIRONMENT}; \
 			OBSERVE=$${OBSERVE=="null" ? "" : $$OBSERVE}; \
-			$(CROSSPLANE_CLI) render $$file $$COMPOSITION $$FUNCTION $${ENVIRONMENT:+-e $$ENVIRONMENT} $${OBSERVE:+-o $$OBSERVE} -x; \
+			$(CROSSPLANE_CLI) render $$file $$COMPOSITION $$FUNCTION $${ENVIRONMENT:+-e $$ENVIRONMENT} $${OBSERVE:+-o $$OBSERVE} -x >> "$(CACHE_DIR)/render/$${OUT_FILE}.yaml"; \
 		done; \
 	done
+
+# Prints the raw rendered yaml to stdout
+render.show:
+	@$(MAKE) render > /dev/null
+	@find "$(CACHE_DIR)/render" -type f -name "*.yaml" -exec cat {} \;
 
 YAMLLINT_FOLDER ?= ./apis
 yamllint: ## Static yamllint check
