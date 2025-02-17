@@ -135,7 +135,7 @@ $(KIND):
 # kubectl download and install
 $(KUBECTL):
 	@$(INFO) installing kubectl $(KUBECTL_VERSION)
-	@curl -fsSLo $(KUBECTL) --create-dirs https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(HOSTOS)/$(SAFEHOSTARCH)/kubectl || $(FAIL)
+	@curl -fsSLo $(KUBECTL) --create-dirs https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(HOSTOS)/$(SAFEHOSTARCH)/kubectl || $(FAIL)
 	@chmod +x $(KUBECTL)
 	@$(OK) installing kubectl $(KUBECTL_VERSION)
 
