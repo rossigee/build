@@ -203,7 +203,7 @@ $(UPTEST):
 	@mkdir -p $(TOOLS_HOST_DIR)
 	@curl -fsSLo $(UPTEST) https://github.com/crossplane/uptest/releases/download/$(UPTEST_VERSION)/uptest_$(SAFEHOSTPLATFORM) || $(FAIL)
 	@chmod +x $(UPTEST)
-	@$(OK) installing uptest $(UPTEST)
+	@$(OK) installing uptest $(UPTEST_VERSION)
 
 # yq download and install
 $(YQ):
