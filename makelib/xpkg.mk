@@ -86,7 +86,7 @@ endif
 		--package-root $(XPKG_DIR) \
 		--examples-root $(XPKG_PROCESSED_EXAMPLES_DIR) \
 		--ignore $(XPKG_IGNORE) \
-		--output $(XPKG_OUTPUT_DIR)/$(PLATFORM)/$(1)-$(VERSION).xpkg || $(FAIL)
+		--package-file $(XPKG_OUTPUT_DIR)/$(PLATFORM)/$(1)-$(VERSION).xpkg || $(FAIL)
 	@$(OK) Built package $(1)-$(VERSION).xpkg for $(PLATFORM)
 ifeq ($(XPKG_CLEANUP_EXAMPLES_ENABLED),true)
 	@rm -rf $(WORK_DIR)/xpkg-cleaned-examples
