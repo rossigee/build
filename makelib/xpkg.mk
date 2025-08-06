@@ -19,13 +19,6 @@ ifeq ($(origin XPKG_DIR),undefined)
 XPKG_DIR := $(ROOT_DIR)/package
 endif
 
-# xref https://github.com/upbound/provider-aws/pull/647, https://github.com/upbound/up/pull/309
-# in up v0.16.0, support for ProviderConfig documentation via object annotations was added.
-# by convention, we will assume the extensions file resides in the package directory.
-ifeq ($(origin XPKG_AUTH_EXT),undefined)
-XPKG_AUTH_EXT := $(XPKG_DIR)/auth.yaml
-endif
-
 ifeq ($(origin XPKG_EXAMPLES_DIR),undefined)
 XPKG_EXAMPLES_DIR := $(ROOT_DIR)/examples
 endif
@@ -80,14 +73,13 @@ ifeq ($(XPKG_CLEANUP_EXAMPLES_ENABLED),true)
 endif
 	@$(INFO) Building package $(1)-$(VERSION).xpkg for $(PLATFORM)
 	@mkdir -p $(OUTPUT_DIR)/xpkg/$(PLATFORM)
-	@controller_arg=$$$$(grep -E '^kind:\s+Provider\s*$$$$' $(XPKG_DIR)/crossplane.yaml > /dev/null && echo "--controller $(BUILD_REGISTRY)/$(1)-$(ARCH)"); \
+	@controller_arg=$$$$(grep -E '^kind:\s+Provider\s*$$$$' $(XPKG_DIR)/crossplane.yaml > /dev/null && echo "--embed-runtime-image $(BUILD_REGISTRY)/$(1)-$(ARCH)"); \
 	$(CROSSPLANE_CLI) xpkg build \
 		$$$${controller_arg} \
 		--package-root $(XPKG_DIR) \
-		--auth-ext $(XPKG_AUTH_EXT) \
 		--examples-root $(XPKG_PROCESSED_EXAMPLES_DIR) \
 		--ignore $(XPKG_IGNORE) \
-		--output $(XPKG_OUTPUT_DIR)/$(PLATFORM)/$(1)-$(VERSION).xpkg || $(FAIL)
+		--package-file $(XPKG_OUTPUT_DIR)/$(PLATFORM)/$(1)-$(VERSION).xpkg || $(FAIL)
 	@$(OK) Built package $(1)-$(VERSION).xpkg for $(PLATFORM)
 ifeq ($(XPKG_CLEANUP_EXAMPLES_ENABLED),true)
 	@rm -rf $(WORK_DIR)/xpkg-cleaned-examples
@@ -101,7 +93,7 @@ define xpkg.release.targets
 xpkg.release.publish.$(1).$(2):
 	@$(INFO) Pushing package $(1)/$(2):$(VERSION)
 	@$(CROSSPLANE_CLI) xpkg push \
-		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package $(XPKG_OUTPUT_DIR)/$(p)/$(2)-$(VERSION).xpkg ) \
+		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package-files $(XPKG_OUTPUT_DIR)/$(p)/$(2)-$(VERSION).xpkg ) \
 		$(1)/$(2):$(VERSION) || $(FAIL)
 	@$(OK) Pushed package $(1)/$(2):$(VERSION)
 xpkg.release.publish: xpkg.release.publish.$(1).$(2)
