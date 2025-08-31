@@ -80,9 +80,9 @@ ifeq ($(XPKG_CLEANUP_EXAMPLES_ENABLED),true)
 endif
 	@$(INFO) Building package $(1)-$(VERSION).xpkg for $(PLATFORM)
 	@mkdir -p $(OUTPUT_DIR)/xpkg/$(PLATFORM)
-	@embed_runtime_arg=$$$$(grep -E '^kind:\s+Provider\s*$$$$' $(XPKG_DIR)/crossplane.yaml > /dev/null && echo "--embed-runtime-image $(BUILD_REGISTRY)/$(1)-$(ARCH)"); \
-	$(CROSSPLANE_CLI) xpkg build \
-		$$$${embed_runtime_arg} \
+	@$(INFO) Building package with embedded runtime for Crossplane v2.0.2 compatibility
+	@$(CROSSPLANE_CLI) xpkg build \
+		--embed-runtime-image $(BUILD_REGISTRY)/$(1)-$(ARCH) \
 		--package-root $(XPKG_DIR) \
 		--examples-root $(XPKG_PROCESSED_EXAMPLES_DIR) \
 		--ignore $(XPKG_IGNORE) \
