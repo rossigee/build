@@ -74,7 +74,7 @@ endif
 	@$(INFO) Building package $(1)-$(VERSION).xpkg for $(PLATFORM)
 	@mkdir -p $(OUTPUT_DIR)/xpkg/$(PLATFORM)
 	@controller_arg=$$$$(grep -E '^kind:\s+Provider\s*$$$$' $(XPKG_DIR)/crossplane.yaml > /dev/null && echo "--embed-runtime-image $(BUILD_REGISTRY)/$(1)-$(ARCH)"); \
-	$(CROSSPLANE_CLI) xpkg build \
+	$(UP) xpkg build \
 		$$$${controller_arg} \
 		--package-root $(XPKG_DIR) \
 		--examples-root $(XPKG_PROCESSED_EXAMPLES_DIR) \
@@ -92,7 +92,7 @@ $(foreach x,$(XPKGS),$(eval $(call xpkg.build.targets,$(x))))
 define xpkg.release.targets
 xpkg.release.publish.$(1).$(2):
 	@$(INFO) Pushing package $(1)/$(2):$(VERSION)
-	@$(CROSSPLANE_CLI) xpkg push \
+	@$(UP) xpkg push \
 		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package-files $(XPKG_OUTPUT_DIR)/$(p)/$(2)-$(VERSION).xpkg ) \
 		$(1)/$(2):$(VERSION) || $(FAIL)
 	@$(OK) Pushed package $(1)/$(2):$(VERSION)
