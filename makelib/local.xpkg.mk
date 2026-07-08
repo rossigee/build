@@ -52,7 +52,7 @@ local.xpkg.deploy.configuration.%: local.xpkg.sync
 	@echo '{"apiVersion":"pkg.crossplane.io/v1","kind":"Configuration","metadata":{"name":"$*"},"spec":{"package":"xpkg.crossplane.internal/dev/$*@$(LOCAL_XPKG_DIGEST)","packagePullPolicy":"Never"}}' | $(KUBECTL) apply -f -
 	@$(OK) deploying configuration package $* $(VERSION)
 
-local.xpkg.deploy.provider.%: $(KIND) local.xpkg.sync
+local.xpkg.deploy.provider.%: $(KIND) $(YQ) local.xpkg.sync
 	@$(INFO) deploying provider package $* $(VERSION)
 	@$(KIND) load docker-image $(BUILD_REGISTRY)/$*-$(ARCH) -n $(KIND_CLUSTER_NAME)
 	@if [ -f "$(DRC_FILE)" ]; then \
