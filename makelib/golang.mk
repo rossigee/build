@@ -150,12 +150,12 @@ go.clean:
 	@rm -fr $(GO_BIN_DIR) $(GO_TEST_DIR)
 
 go.generate:
-	@$(INFO) go generate $(PLATFORM)
-	@CGO_ENABLED=0 $(GOHOST) generate $(GO_GENERATE_FLAGS) $(GO_PACKAGES) $(GO_INTEGRATION_TEST_PACKAGES) || $(FAIL)
-	@$(OK) go generate $(PLATFORM)
 	@$(INFO) go mod tidy
 	@$(GOHOST) mod tidy || $(FAIL)
 	@$(OK) go mod tidy
+	@$(INFO) go generate $(PLATFORM)
+	@CGO_ENABLED=0 $(GOHOST) generate $(GO_GENERATE_FLAGS) $(GO_PACKAGES) $(GO_INTEGRATION_TEST_PACKAGES) || $(FAIL)
+	@$(OK) go generate $(PLATFORM)
 
 .PHONY: go.build go.install go.test.unit go.test.integration go.lint go.vendor go.vendor.check go.clean go.generate
 
