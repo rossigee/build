@@ -153,6 +153,9 @@ go.generate:
 	@$(INFO) go mod tidy
 	@$(GOHOST) mod tidy || $(FAIL)
 	@$(OK) go mod tidy
+	@$(INFO) go mod vendor
+	@$(GOHOST) mod vendor || $(FAIL)
+	@$(OK) go mod vendor
 	@$(INFO) go generate $(PLATFORM)
 	@CGO_ENABLED=0 $(GOHOST) generate $(GO_GENERATE_FLAGS) $(GO_PACKAGES) $(GO_INTEGRATION_TEST_PACKAGES) || $(FAIL)
 	@$(OK) go generate $(PLATFORM)
