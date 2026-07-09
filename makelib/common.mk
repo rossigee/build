@@ -441,7 +441,20 @@ reviewable:
 	@$(MAKE) test
 	@echo "Running govulncheck..."
 	@GOWORK=$$(mktemp -d) go install golang.org/x/vuln/cmd/govulncheck@v1.5.0
-	@GOFLAGS=-mod=mod GOWORK=$$GOWORK $$HOME/go/bin/govulncheck ./...
+	@GOFLAGS=-mod=mod GOWORK=$$GOWORK $$HOME/go/bin/govulncheck ./... 2>&1 | tee /tmp/govulncheck.out; \
+	if grep -q "^Vulnerability #" /tmp/govulncheck.out; then \
+	  FIXED=$$(grep -c "Fixed in: N/A" /tmp/govulncheck.out || true); \
+	  TOTAL=$$(grep -c "^Vulnerability #" /tmp/govulncheck.out || true); \
+	  if [ "$$FIXED" -eq "$$TOTAL" ]; then \
+	    echo "govulncheck: $$TOTAL unfixable vulnerabilities (no fix available), ignoring"; \
+	  else \
+	    echo "govulncheck: $$TOTAL vulnerabilities found ($$FIXED unfixable, $$((TOTAL - FIXED)) potentially fixable)"; \
+	    exit 1; \
+	  fi; \
+	else \
+	  echo "No vulnerabilities found."; \
+	fi; \
+	rm -f /tmp/govulncheck.out
 
 # ensure generate target doesn't create a diff
 check-diff: generate
