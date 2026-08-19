@@ -440,8 +440,8 @@ reviewable:
 	@$(MAKE) lint
 	@$(MAKE) test
 	@echo "Running govulncheck..."
-	@GOWORK=off $$HOME/go/bin/go1.26.5 install -mod=mod golang.org/x/vuln/cmd/govulncheck@latest
-	@GOFLAGS=-mod=mod GOWORK=off $$HOME/go/bin/go1.26.5 run -mod=mod golang.org/x/vuln/cmd/govulncheck ./...
+	@GOWORK=off GOBIN=$$HOME/go/bin go install -mod=mod golang.org/x/vuln/cmd/govulncheck@latest
+	@GOFLAGS=-mod=mod GOWORK=off $$HOME/go/bin/govulncheck ./...
 
 # ensure generate target doesn't create a diff
 check-diff: generate
