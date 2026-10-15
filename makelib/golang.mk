@@ -77,7 +77,7 @@ GO_VERSION := $(shell $(GO) version | sed -ne 's/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9
 
 # We use a consistent version of golangci-lint to ensure everyone gets the same
 # linters.
-GOLANGCILINT_VERSION ?= 1.64.8
+GOLANGCILINT_VERSION ?= 2.14.0
 GOLANGCILINT := $(TOOLS_HOST_DIR)/golangci-lint-v$(GOLANGCILINT_VERSION)
 
 GO_BIN_DIR := $(abspath $(OUTPUT_DIR)/bin)
@@ -150,12 +150,15 @@ go.clean:
 	@rm -fr $(GO_BIN_DIR) $(GO_TEST_DIR)
 
 go.generate:
-	@$(INFO) go generate $(PLATFORM)
-	@CGO_ENABLED=0 $(GOHOST) generate $(GO_GENERATE_FLAGS) $(GO_PACKAGES) $(GO_INTEGRATION_TEST_PACKAGES) || $(FAIL)
-	@$(OK) go generate $(PLATFORM)
 	@$(INFO) go mod tidy
 	@$(GOHOST) mod tidy || $(FAIL)
 	@$(OK) go mod tidy
+	@$(INFO) go mod vendor
+	@$(GOHOST) mod vendor || $(FAIL)
+	@$(OK) go mod vendor
+	@$(INFO) go generate $(PLATFORM)
+	@CGO_ENABLED=0 $(GOHOST) generate $(GO_GENERATE_FLAGS) $(GO_PACKAGES) $(GO_INTEGRATION_TEST_PACKAGES) || $(FAIL)
+	@$(OK) go generate $(PLATFORM)
 
 .PHONY: go.build go.install go.test.unit go.test.integration go.lint go.vendor go.vendor.check go.clean go.generate
 
